@@ -15,11 +15,11 @@ app.get("/", (req, res) => {
 await updateEvents();
 await updateMarkets();
 
-//run every 30 minutes
+//run every hour
 setInterval(async () => {
   await updateEvents();
   await updateMarkets();
-}, 30 * 60 * 1000);
+}, 60 * 60 * 1000);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

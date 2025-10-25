@@ -7,9 +7,8 @@ const marketSchema = new mongoose.Schema({
   status: String,
   yes_price: Number,
   no_price: Number,
-  created_at: Date,
   expires_at: Date,
 }, { timestamps: true });
 
-marketSchema.index({ created_at: -1 });
+marketSchema.index({ createdAt: -1 });
 export default mongoose.model("Market", marketSchema);

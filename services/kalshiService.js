@@ -7,12 +7,21 @@ const KALSHI_BASE_URL = "https://api.elections.kalshi.com/trade-api/v2"
 // fetch and store new events
 export async function updateEvents() {
   try {
-    const { data } = await axios.get(`${KALSHI_BASE_URL}/events`,{ params: { with_nested_markets: true , status: "open", }});
+
+    let cursor = null;
+    const limit = 200; // max allowed per page
+    let eventsFetched;
+    let collectionSize=0;
+
+    do{
+    const { data } = await axios.get(`${KALSHI_BASE_URL}/events`,{ params: { with_nested_markets: true , status: "open", cursor, limit}});
     const events = data.events || [];
+    eventsFetched = events.length;
 
     for (const event of events) {
       const exists = await Event.findOne({ event_ticker: event.event_ticker });
       if (!exists) {
+        collectionSize++;
         let expiresAt = null;
         if(event.strike_date){
             expiresAt= new Date(event.strike_date);
@@ -31,24 +40,27 @@ export async function updateEvents() {
           title: event.title,
           category: event.category,
           sub_title: event.sub_title,
-          created_at: new Date(),
           expires_at: expiresAt,
           status: event.status,
-          
+          //keywords and other things
         });
       }
+     
     }
+    cursor = data.cursor;
+    }
+    while(cursor && collectionSize<400);
 
     // remove expired events
     await Event.deleteMany({ expires_at: { $lt: new Date() } });
 
-    console.log(" Events updated");
+    console.log("Events updated");
   } catch (err) {
     console.error("Error updating events:", err.message);
   }
 }
 
-// Fetch and store new markets
+// fetch and store new markets
 export async function updateMarkets() {
   try {
     const { data } = await axios.get(`${KALSHI_BASE_URL}/markets`);
@@ -64,7 +76,6 @@ export async function updateMarkets() {
           status: market.status,
           yes_price: market.yes_price,
           no_price: market.no_price,
-          created_at:  new Date(),
           expires_at: new Date(market.latest_expiration_time)
         });
       }

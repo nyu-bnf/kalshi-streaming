@@ -5,10 +5,10 @@ const eventSchema = new mongoose.Schema({
   title: String,
   category: String,
   sub_title: String,
-  created_at: { type: Date, default: Date.now },
   expires_at: Date,
   status: String,
-  key_words: Array
+  key_words: [{ type: String }],
+  related_news: [{ type: String }]
 }, { timestamps: true });
 
 eventSchema.index({ created_at: -1 });
