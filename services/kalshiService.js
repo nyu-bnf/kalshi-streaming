@@ -1,7 +1,7 @@
 import axios from "axios";
 import Event from "../models/event.js";
 import Market from "../models/market.js";
-import { extractKeywords, generateSearchQueries } from './generic-search-generator.js';
+import { extractKeywords } from './generic-search-generator.js';
 const KALSHI_BASE_URL = "https://api.elections.kalshi.com/trade-api/v2"
 
 // fetch and store new events
@@ -73,10 +73,10 @@ export async function updateMarkets() {
         await Market.create({
           market_ticker: market.ticker,
           event_ticker: market.event_ticker,
-          name: market.name,
+          name: market.title,
           status: market.status,
-          yes_price: market.yes_price,
-          no_price: market.no_price,
+          yes_price: market.yes_bid,
+          no_price: market.no_bid,
           expires_at: new Date(market.latest_expiration_time)
         });
       }

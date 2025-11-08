@@ -7,6 +7,7 @@ const eventSchema = new mongoose.Schema({
   sub_title: String,
   expires_at: Date,
   status: String,
+  //markets
   key_words: [{ type: String }],
   related_news: [{ type: String }]
 }, { timestamps: true });

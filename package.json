@@ -4,9 +4,8 @@
   "description": "",
   "license": "ISC",
   "author": "",
-  "type": "commonjs",
-  "main": "app.js",
   "type": "module",
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
@@ -15,6 +14,7 @@
     "axios": "^1.12.2",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "mongoose": "^8.19.2"
+    "mongoose": "^8.19.2",
+    "ws": "^8.18.3"
   }
 }
