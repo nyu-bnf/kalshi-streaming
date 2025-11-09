@@ -13,4 +13,5 @@ const marketSchema = new mongoose.Schema({
   expires_at: Date,
 }, { timestamps: true });
 
-marketSchema.index({ create
+marketSchema.index({ createdAt: -1 });
+export default mongoose.model("Market", marketSchema);

@@ -413,3 +413,7 @@ async function main() {
 }
 
 export async function populateNewsCollection() {
+  await main();
+}
+
+

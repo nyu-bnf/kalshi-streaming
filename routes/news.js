@@ -33,4 +33,21 @@ router.get("/", async (req, res) => {
   }
 });
 
-//ge
+//get news by event ID
+router.get("/event/:id", async (req, res) => {
+  try {
+    //ID IS actual id, not ticker
+    const db = await getDb();
+    const eventId = new ObjectId(req.params.id);
+    const news = await db.collection("news").populate("event_ids")
+      .find({ event_ids: eventId })
+      .sort({ published_at: -1 })
+      .toArray();
+    res.json(news);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch news for event" });
+  }
+});
+
+export default router;
