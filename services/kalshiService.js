@@ -82,4 +82,15 @@ export async function updateEventsAndMarkets() {
 
     //remove expired events
     const expired = await Event.deleteMany({ expires_at: { $lt: new Date() } });
-    console.log("expired event
+    console.log("expired events: " + expired.deletedCount);
+
+    //remove expired markets
+    const expiredMarkets = await Market.deleteMany({ expires_at: { $lt: new Date() } });
+    console.log("expired markets: " + expiredMarkets.deletedCount);
+
+    console.log("Events and markets updated!");
+  } catch (err) {
+    console.error("Error updating events and markets:", err.message);
+  }
+}
+
