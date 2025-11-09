@@ -9,7 +9,8 @@ const eventSchema = new mongoose.Schema({
   status: String,
   //markets
   key_words: [{ type: String }],
-  related_news: [{ type: String }]
+  related_news: [{ type: mongoose.Schema.Types.ObjectId, ref: "News" }], //related news is object id
+  markets: [{ type: mongoose.Schema.Types.ObjectId, ref: "Market" }] //markets
 }, { timestamps: true });
 
 eventSchema.index({ created_at: -1 });
