@@ -33,4 +33,12 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+//filter by category
+router.get("/:category", async(req,res)=>{
+    
+});
+
 export default router;
+
+
+//need to get most relevant news

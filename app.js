@@ -29,6 +29,7 @@ setInterval(async () => {
   await updateEventsAndMarkets();
 }, 60 * 60 * 1000);
 
+
 setInterval(async () => {
   try {
     console.log("\nrunning scheduled news population...");
