@@ -41,6 +41,12 @@ const NEWS_CONFIG = {
   days: parseInt(process.env.NEWS_DAYS || '30'), // Only fetch articles from last N days
 };
 
+// Concurrency settings
+const CONCURRENCY_CONFIG = {
+  maxConcurrent: parseInt(process.env.MAX_CONCURRENT_EVENTS || '12'), // Max parallel event processing
+  delayBetweenBatches: parseInt(process.env.BATCH_DELAY_MS || '100'), // Delay between batches in ms
+};
+
 // ============================================================================
 // UTILITIES
 // ============================================================================
@@ -360,6 +366,16 @@ async function main() {
       console.log('ℹ️  Index on "related_news" field already exists\n');
     }
     
+    // Debug: Check collection sizes
+    const totalEvents = await eventsCollection.countDocuments();
+    const totalMarkets = await db.collection('markets').countDocuments();
+    const totalNews = await newsCollection.countDocuments();
+    
+    console.log(`📊 Collection sizes:`);
+    console.log(`   Events: ${totalEvents}`);
+    console.log(`   Markets: ${totalMarkets}`);
+    console.log(`   News: ${totalNews}\n`);
+    
     // Fetch all events that have key_words
     const events = await eventsCollection
       .find({ key_words: { $exists: true, $ne: [] } })
@@ -372,19 +388,41 @@ async function main() {
       return;
     }
     
-    // Process each event
+    // Process events concurrently in batches
     let processed = 0;
+    const { maxConcurrent, delayBetweenBatches } = CONCURRENCY_CONFIG;
     
-    for (const event of events) {
-      try {
-        await processEvent(eventsCollection, newsCollection, event);
-        processed++;
-      } catch (error) {
-        console.error(`❌ Error processing event ${event._id}:`, error);
-      }
+    console.log(`🔄 Processing ${events.length} events with max ${maxConcurrent} concurrent threads\n`);
+    
+    for (let i = 0; i < events.length; i += maxConcurrent) {
+      const batch = events.slice(i, i + maxConcurrent);
+      const batchNumber = Math.floor(i / maxConcurrent) + 1;
+      const totalBatches = Math.ceil(events.length / maxConcurrent);
       
-      // Small delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log(`📦 Processing batch ${batchNumber}/${totalBatches} (${batch.length} events)`);
+      
+      // Process batch concurrently
+      const batchPromises = batch.map(async (event) => {
+        try {
+          await processEvent(eventsCollection, newsCollection, event);
+          return { success: true, eventId: event._id };
+        } catch (error) {
+          console.error(`❌ Error processing event ${event._id}:`, error);
+          return { success: false, eventId: event._id, error };
+        }
+      });
+      
+      const batchResults = await Promise.all(batchPromises);
+      const successful = batchResults.filter(r => r.success).length;
+      processed += successful;
+      
+      console.log(`✅ Batch ${batchNumber} completed: ${successful}/${batch.length} successful\n`);
+      
+      // Delay between batches to avoid overwhelming the RSS service
+      if (i + maxConcurrent < events.length) {
+        console.log(`⏳ Waiting ${delayBetweenBatches}ms before next batch...`);
+        await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
+      }
     }
     
     // Get final counts
