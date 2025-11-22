@@ -4,7 +4,7 @@ import Market from "../models/market.js";
 import { extractKeywords } from './generic-search-generator.js';
 const KALSHI_BASE_URL = "https://api.elections.kalshi.com/trade-api/v2"
 
-// fetch and store new events, update markets, and remove expired events
+//fetch and store new events, update markets, and remove expired events
 export async function updateEventsAndMarkets() {
   try {
     let cursor = null;
@@ -19,10 +19,10 @@ export async function updateEventsAndMarkets() {
       const events = data.events || [];
 
       for (const event of events) {
-        const exists = await Event.findOne({ event_ticker: event.event_ticker });
+        const existingEvent = await Event.findOne({ event_ticker: event.event_ticker });
         let marketIds = [];
 
-        //create or update markets
+        //create or update markets if they exist
         if (event.markets?.length) {
           for (const m of event.markets) {
             const marketDoc = await Market.findOneAndUpdate(
@@ -36,7 +36,7 @@ export async function updateEventsAndMarkets() {
                 status: m.status,
                 yes_price: m.yes_bid,
                 no_price: m.no_bid,
-                volume : m.volume,
+                volume: m.volume,
                 expires_at: new Date(m.latest_expiration_time),
               },
               { upsert: true, new: true }
@@ -49,13 +49,13 @@ export async function updateEventsAndMarkets() {
         let expiresAt = event.strike_date
           ? new Date(event.strike_date)
           : event.markets?.length
-            ? new Date(Math.max(...event.markets.map(m => new Date(m.latest_expiration_time))))
+            ? new Date(Math.max(...event.markets.map(m => new Date(m.latest_expiration_time).getTime())))
             : null;
 
         const keyWords = extractKeywords(event.title);
 
-        if (!exists) {
-          //create new event with linked markets
+        if (!existingEvent) {
+          //create new event with markets (even if empty)
           await Event.create({
             event_ticker: event.event_ticker,
             title: event.title,
@@ -67,10 +67,13 @@ export async function updateEventsAndMarkets() {
             markets: marketIds,
           });
         } else {
-          //update existing event with new markets and expiration
+          //update event; only overwrite markets if we have new ones
+          const updateData = { expires_at: expiresAt };
+          if (marketIds.length > 0) updateData.markets = marketIds;
+
           await Event.findOneAndUpdate(
             { event_ticker: event.event_ticker },
-            { markets: marketIds, expires_at: expiresAt }
+            updateData
           );
         }
 
@@ -78,17 +81,16 @@ export async function updateEventsAndMarkets() {
       }
 
       cursor = data.cursor;
-    } while (cursor && collectionSize < 200);
+    } while (cursor && collectionSize < 1000);
 
-    //remove expired events
-    const expired = await Event.deleteMany({ expires_at: { $lt: new Date() } });
-    console.log("expired events: " + expired.deletedCount);
+    // remove expired events and markets
+    const expiredEvents = await Event.deleteMany({ expires_at: { $lt: new Date() } });
+    console.log("expired events:", expiredEvents.deletedCount);
 
-    //remove expired markets
     const expiredMarkets = await Market.deleteMany({ expires_at: { $lt: new Date() } });
-    console.log("expired markets: " + expiredMarkets.deletedCount);
+    console.log("expired markets:", expiredMarkets.deletedCount);
 
-    console.log("Events and markets updated!");
+    console.log("Events and markets updated successfully!");
   } catch (err) {
     console.error("Error updating events and markets:", err.message);
   }

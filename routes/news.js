@@ -1,31 +1,19 @@
 import express from "express";
-import { MongoClient, ObjectId } from "mongodb";
 import dotenv from "dotenv";
+import News from "../models/news.js";
 
 dotenv.config();
 
 const router = express.Router();
-const MONGODB_URI = process.env.MONGO_URI;
-const DB_NAME = process.env.DB_NAME || "Kalshi";
-
-let client;
-async function getDb() {
-  if (!client) {
-    client = new MongoClient(MONGODB_URI);
-    await client.connect();
-  }
-  return client.db(DB_NAME);
-}
 
 //get all news
 router.get("/", async (req, res) => {
   try {
-    const db = await getDb();
-    const news = await db.collection("news").populate("event_ids")
-      .find({})
+    const news = await News.find({})
+      .populate("event_ids")
       .sort({ published_at: -1 })
-      .limit(50)
-      .toArray();
+      .limit(50);
+
     res.json(news);
   } catch (err) {
     console.error(err);
@@ -36,13 +24,12 @@ router.get("/", async (req, res) => {
 //get news by event ID
 router.get("/event/:id", async (req, res) => {
   try {
-    //ID IS actual id, not ticker
-    const db = await getDb();
-    const eventId = new ObjectId(req.params.id);
-    const news = await db.collection("news").populate("event_ids")
-      .find({ event_ids: eventId })
-      .sort({ published_at: -1 })
-      .toArray();
+    const eventId = req.params.id;
+
+    const news = await News.find({ event_ids: eventId })
+      .populate("event_ids")
+      .sort({ published_at: -1 });
+
     res.json(news);
   } catch (err) {
     console.error(err);
