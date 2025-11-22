@@ -1,0 +1,105 @@
+name: Update News Pipeline
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC (adjust timezone as needed)
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  update-news:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Puppeteer dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            ca-certificates \
+            fonts-liberation \
+            libappindicator3-1 \
+            libasound2 \
+            libatk-bridge2.0-0 \
+            libatk1.0-0 \
+            libc6 \
+            libcairo2 \
+            libcups2 \
+            libdbus-1-3 \
+            libexpat1 \
+            libfontconfig1 \
+            libgbm1 \
+            libgcc1 \
+            libglib2.0-0 \
+            libgtk-3-0 \
+            libnspr4 \
+            libnss3 \
+            libpango-1.0-0 \
+            libpangocairo-1.0-0 \
+            libstdc++6 \
+            libx11-6 \
+            libx11-xcb1 \
+            libxcb1 \
+            libxcomposite1 \
+            libxcursor1 \
+            libxdamage1 \
+            libxext6 \
+            libxfixes3 \
+            libxi6 \
+            libxrandr2 \
+            libxrender1 \
+            libxss1 \
+            libxtst6 \
+            lsb-release \
+            wget \
+            xdg-utils
+      
+      - name: Step 1 - Update Events and Markets
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+        run: |
+          echo "📋 Step 1: Updating events and markets..."
+          node scripts/update-events-markets.js
+      
+      - name: Step 2 - Populate News Collection
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          NEWS_LANG: ${{ secrets.NEWS_LANG || 'en-US' }}
+          NEWS_REGION: ${{ secrets.NEWS_REGION || 'US' }}
+          NEWS_CEID: ${{ secrets.NEWS_CEID || 'US:en' }}
+        run: |
+          echo "📰 Step 2: Populating news collection..."
+          node populate-news-collection.js
+      
+      - name: Step 3 - Update Thumbnails for New Articles
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          BATCH_SIZE: 50
+          MAX_CONCURRENCY: 5
+        run: |
+          echo "🖼️  Step 3: Updating thumbnails for new articles..."
+          node update-news-thumbnails.js
+      
+      - name: Summary
+        run: |
+          echo "✅ Pipeline completed successfully!"
+          echo "📊 All steps executed:"
+          echo "   1. Events and Markets updated (no duplicates)"
+          echo "   2. News collection populated (no duplicates)"
+          echo "   3. Thumbnails updated for new articles"
+
+

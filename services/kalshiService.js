@@ -50,7 +50,7 @@ export async function updateEvents() {
     }
     cursor = data.cursor;
     }
-    while(cursor && collectionSize<400);
+    while(cursor && collectionSize<2000);
 
     // remove expired events
     await Event.deleteMany({ expires_at: { $lt: new Date() } });

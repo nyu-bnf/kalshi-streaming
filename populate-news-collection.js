@@ -27,8 +27,8 @@ dotenv.config();
 // CONFIGURATION
 // ============================================================================
 
-const MONGODB_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/Kalshi';
-const DB_NAME = process.env.DB_NAME || 'Kalshi'; // Match the existing database name
+const MONGODB_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/test';
+const DB_NAME = process.env.DB_NAME || 'test'; // Match the existing database name
 const EVENTS_COLLECTION = 'events';
 const NEWS_COLLECTION = 'news';
 
