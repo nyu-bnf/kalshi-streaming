@@ -24,20 +24,7 @@ app.get("/", (req, res) => {
 await updateEventsAndMarkets();
 await populateNewsCollection(); 
 
-//run every hour
-setInterval(async () => {
-  await updateEventsAndMarkets();
-}, 60 * 60 * 1000);
 
-
-setInterval(async () => {
-  try {
-    console.log("\nrunning scheduled news population...");
-    await populateNewsCollection();
-  } catch (error) {
-    console.error("error during scheduled news population:", error);
-  }
-}, 6 * 60 * 60 * 1000);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -10,7 +10,7 @@
 
 import dotenv from 'dotenv';
 import { connectDB } from '../utils/db.js';
-import { updateEvents, updateMarkets } from '../services/kalshiService.js';
+import { updateEventsAndMarkets } from '../services/kalshiService.js';
 
 dotenv.config();
 
@@ -25,13 +25,9 @@ async function main() {
     
     // Update events (with duplicate prevention)
     console.log('📋 Updating events...');
-    await updateEvents();
+    await updateEventsAndMarkets();
     console.log('✅ Events updated\n');
-    
-    // Update markets (with duplicate prevention)
-    console.log('📈 Updating markets...');
-    await updateMarkets();
-    console.log('✅ Markets updated\n');
+  
     
     console.log('='.repeat(80));
     console.log('✅ All updates completed successfully!\n');
