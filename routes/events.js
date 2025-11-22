@@ -32,4 +32,63 @@ router.get("/:id", async (req, res) => {
         });
   
       if (!event) {
-        return res.status(404).json({ error: "Event not
+        return res.status(404).json({ error: "Event not found" });
+      }
+  
+      res.json({ event });
+  
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Failed to fetch event" });
+    }
+});
+
+//filter by category
+router.get("/category/:category", async (req, res) => {
+  try {
+    const events = await Event.aggregate([
+      { $match: { category: req.params.category } },
+
+      // populate markets
+      {
+        $lookup: {
+          from: "markets",          // collection name in MongoDB
+          localField: "markets",    // field in Event
+          foreignField: "_id",      // field in Market
+          as: "markets"
+        }
+      },
+
+      // populate related_news
+      {
+        $lookup: {
+          from: "news",
+          localField: "related_news",
+          foreignField: "_id",
+          as: "related_news"
+        }
+      },
+
+      // count related news
+      {
+        $addFields: {
+          related_news: { $slice: [ "$related_news", 5 ] },
+          newsCount: { $size: "$related_news" }
+        }
+      },
+
+      // sort by expiration and news count
+      {
+        $sort: { expires_at: 1, newsCount: -1 }
+      }
+    ]);
+
+    res.json(events);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Failed to fetch events" });
+  }
+});
+
+export default router;
+
