@@ -59,11 +59,17 @@ router.get("/category/:category", async (req, res) => {
           related_news: { $slice: [ "$related_news", 5 ] },
           newsCount: { $size: "$related_news" }
         }
+
+      },
+      {
+        $addFields: {
+          hasMarkets: { $gt: [{ $size: "$markets" }, 0] }
+        }
       },
 
       // sort by expiration and news count
       {
-        $sort: { expires_at: 1, newsCount: -1 }
+        $sort: { hasMarkets: -1 ,expires_at: 1, newsCount: -1, }
       },
       { $limit: 50 }
     ]);

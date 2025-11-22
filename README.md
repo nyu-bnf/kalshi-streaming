@@ -1,11 +1,5 @@
 
-
-
-
-
-
-
-## Categories
+### Categories
 
 "Climate and Weather"
 
@@ -34,5 +28,3 @@
 "Sports"
 
 "Transportation"
-
-"World"
