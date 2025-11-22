@@ -64,7 +64,8 @@ router.get("/category/:category", async (req, res) => {
       // sort by expiration and news count
       {
         $sort: { expires_at: 1, newsCount: -1 }
-      }
+      },
+      { $limit: 50 }
     ]);
 
     res.json(events);
