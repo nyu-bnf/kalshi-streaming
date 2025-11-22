@@ -50,6 +50,5 @@ router.get("/event/:id", async (req, res) => {
   }
 });
 
-//filtering
 
 export default router;
