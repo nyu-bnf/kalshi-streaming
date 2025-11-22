@@ -8,10 +8,16 @@ const router = express.Router();
 //get all events
 router.get("/", async (req, res) => {
   try {
-    const events = await Event.find().sort({ expires_at: 1 }).populate({path: "markets", model: "Market"}).populate({
-      path: "related_news",
-      options: { sort: { published_at: -1 },limit: 5 } //newest first
-    }).limit(50);
+    const events = await Event.find({
+      markets: { $exists: true, $ne: [] }   //filters out events with empty markets array
+    })
+      .sort({ expires_at: 1 })
+      .populate({ path: "markets", model: "Market" })
+      .populate({
+        path: "related_news",
+        options: { sort: { published_at: -1 }, limit: 5 }
+      })
+      .limit(50);
 
     
     res.json(events);
@@ -19,28 +25,6 @@ router.get("/", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch events" });
   }
-});
-
-//get event by id
-router.get("/:id", async (req, res) => {
-    try {
-      const event = await Event.findOne({ event_ticker: req.params.id })
-        .populate({path: "markets", model: "Market"})
-        .populate({
-          path: "related_news",
-          options: { sort: { published_at: -1 },limit: 5 } //newest first
-        });
-  
-      if (!event) {
-        return res.status(404).json({ error: "Event not found" });
-      }
-  
-      res.json({ event });
-  
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Failed to fetch event" });
-    }
 });
 
 //filter by category
@@ -89,6 +73,30 @@ router.get("/category/:category", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch events" });
   }
 });
+
+//get event by id
+router.get("/:id", async (req, res) => {
+  try {
+    const event = await Event.findOne({ event_ticker: req.params.id })
+      .populate({path: "markets", model: "Market"})
+      .populate({
+        path: "related_news",
+        options: { sort: { published_at: -1 },limit: 5 } //newest first
+      });
+
+    if (!event) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    res.json({ event });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch event" });
+  }
+});
+
+
 
 export default router;
 

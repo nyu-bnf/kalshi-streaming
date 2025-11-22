@@ -81,7 +81,7 @@ export async function updateEventsAndMarkets() {
       }
 
       cursor = data.cursor;
-    } while (cursor && collectionSize < 1000);
+    } while (cursor && collectionSize < 3000);
 
     // remove expired events and markets
     const expiredEvents = await Event.deleteMany({ expires_at: { $lt: new Date() } });
